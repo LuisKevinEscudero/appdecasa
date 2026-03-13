@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 export default function BudgetScreen() {
   const { 
     totalIngresos, totalAsignado, categorias, gastos, 
-    actualizarAsignacion, agregarCategoria, eliminarCategoria 
+    actualizarAsignacion, agregarCategoria, eliminarCategoria, eliminarGasto
   } = useContext(BudgetContext);
 
   const [nuevaCatNombre, setNuevaCatNombre] = useState('');
@@ -110,16 +110,36 @@ export default function BudgetScreen() {
             <ScrollView style={styles.listaGastos}>
               {gastosDeCategoria.length > 0 ? (
                 gastosDeCategoria.map((g, idx) => (
-                  <View key={idx} style={styles.itemGasto}>
-                    <View>
+                  <View key={g.id || idx} style={styles.itemGasto}>
+                    <View style={{ flex: 1 }}>
                       <Text style={styles.gastoNombre}>{g.nombre}</Text>
                       <Text style={styles.gastoFecha}>{g.fecha}</Text>
                     </View>
-                    <Text style={styles.gastoMonto}>-{g.monto.toFixed(2)}€</Text>
+                    
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={styles.gastoMonto}>-{g.monto.toFixed(2)}€</Text>
+                      
+                      {/* BOTÓN PARA BORRAR GASTO INDIVIDUAL */}
+                      <TouchableOpacity 
+                        onPress={() => {
+                          Alert.alert(
+                            "Borrar Gasto",
+                            "¿Eliminar este registro?",
+                            [
+                              { text: "No" },
+                              { text: "Sí", onPress: () => eliminarGasto(g.id) }
+                            ]
+                          );
+                        }}
+                        style={{ marginLeft: 15 }}
+                      >
+                        <Ionicons name="trash-outline" size={20} color="#ff5252" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 ))
               ) : (
-                <Text style={styles.textoVacio}>No hay gastos registrados en esta categoría.</Text>
+                <Text style={styles.textoVacio}>No hay gastos registrados.</Text>
               )}
             </ScrollView>
           </View>

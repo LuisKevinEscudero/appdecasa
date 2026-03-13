@@ -16,6 +16,12 @@ export const BudgetProvider = ({ children }) => {
   // Estado que guarda TODO el historial. Las claves son los meses ("2026-03")
   const [historial, setHistorial] = useState({});
 
+  const usuarios = [
+    { id: '1', nombre: 'Kevin', color: '#6200ee' },
+    { id: '2', nombre: 'Oscar', color: '#03dac6' },
+    { id: '3', nombre: 'Extra', color: '#ff9800' },
+  ];
+
   // Categorías por defecto si la app está vacía
   const categoriasBase = [
     { id: '1', nombre: 'Comida', asignado: 0 },
@@ -115,7 +121,20 @@ export const BudgetProvider = ({ children }) => {
     }));
   };
 
-  const agregarIngreso = (nuevo) => actualizarMesActivo({ ingresos: [...ingresos, nuevo] });
+  // --- CORRECCIÓN EN BUDGETCONTEXT.JS ---
+  const agregarIngreso = (concepto, cantidad, usuarioId) => {
+    const nuevoIngreso = {
+      id: Date.now().toString(),
+      concepto: concepto,    // <--- Cambiado de 'nombre' a 'concepto'
+      cantidad: parseFloat(cantidad) || 0,
+      usuarioId: usuarioId,  // <--- ¡Esto es lo que faltaba guardar!
+      fecha: new Date().toLocaleDateString()
+    };
+    
+    actualizarMesActivo({ 
+      ingresos: [...ingresos, nuevoIngreso] 
+    });
+  };
   
   const registrarMovimientoGasto = (nuevoGasto) => {
     const gastoCompleto = { ...nuevoGasto, id: Date.now().toString(), fecha: new Date().toLocaleDateString() };
@@ -139,12 +158,18 @@ export const BudgetProvider = ({ children }) => {
     });
   };
 
+  const eliminarGasto = (gastoId) => {
+    actualizarMesActivo({
+      gastos: gastos.filter(g => g.id !== gastoId)
+    });
+  };
+
   return (
     <BudgetContext.Provider value={{
       mesActivo, cambiarMesActivo,
       ingresos, totalIngresos, totalAsignado, totalGastado, categorias, gastos,
       agregarIngreso, actualizarAsignacion, registrarMovimientoGasto,
-      agregarCategoria, eliminarCategoria
+      agregarCategoria, eliminarCategoria, eliminarGasto, usuarios
     }}>
       {children}
     </BudgetContext.Provider>
