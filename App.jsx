@@ -1,12 +1,12 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons'; // Iconos integrados
+import { Ionicons } from '@expo/vector-icons';
 import { BudgetProvider } from './src/context/BudgetContext';
 
 import HomeScreen from './src/screens/HomeScreen';
 import IncomeScreen from './src/screens/IncomeScreen';
-import BudgetScreen from './src/screens/BudgetScreen';
+import BudgetScreen from './src/screens/BudgetScreen'; // <--- Revisa que este archivo exista
 
 const Tab = createBottomTabNavigator();
 
@@ -18,13 +18,9 @@ export default function App() {
           screenOptions={({ route }) => ({
             headerStyle: { backgroundColor: '#6200ee' },
             headerTintColor: '#fff',
-            tabBarActiveTintColor: '#6200ee',
-            tabBarInactiveTintColor: 'gray',
             tabBarIcon: ({ color, size }) => {
-              let iconName;
-              if (route.name === 'Inicio') iconName = 'home';
-              else if (route.name === 'Ingresos') iconName = 'cash';
-              else if (route.name === 'Presupuesto') iconName = 'pie-chart';
+              let iconName = route.name === 'Inicio' ? 'home' : 
+                             route.name === 'Ingresos' ? 'cash' : 'pie-chart';
               return <Ionicons name={iconName} size={size} color={color} />;
             },
           })}

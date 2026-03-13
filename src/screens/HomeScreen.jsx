@@ -1,9 +1,20 @@
 import React, { useContext, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { BudgetContext } from '../context/BudgetContext';
+import { Ionicons } from '@expo/vector-icons'; // <--- ESTA ES LA QUE FALTA
+
+const formatearMesVisual = (mesStr) => {
+  if (!mesStr) return "";
+  const [year, month] = mesStr.split('-');
+  const meses = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+  return `${meses[parseInt(month) - 1]} ${year}`;
+};
 
 export default function HomeScreen() {
-  const { totalIngresos, totalGastado, categorias, gastos, registrarMovimientoGasto } = useContext(BudgetContext);
+  const { totalIngresos, totalGastado, categorias, gastos, registrarMovimientoGasto, mesActivo, cambiarMesActivo } = useContext(BudgetContext);
   
   const [nombreGasto, setNombreGasto] = useState('');
   const [montoGasto, setMontoGasto] = useState('');
@@ -28,7 +39,21 @@ export default function HomeScreen() {
       style={{ flex: 1 }}
     >
       <ScrollView style={styles.container}>
-        
+
+        {/* SELECTOR DE MESES */}
+        <View style={styles.selectorMes}>
+          <TouchableOpacity onPress={() => cambiarMesActivo('anterior')} style={styles.btnMes}>
+            <Ionicons name="chevron-back" size={24} color="#6200ee" />
+          </TouchableOpacity>
+          
+          {/* AQUÍ ESTÁ EL CAMBIO */}
+          <Text style={styles.textoMes}>{formatearMesVisual(mesActivo)}</Text>
+
+          <TouchableOpacity onPress={() => cambiarMesActivo('siguiente')} style={styles.btnMes}>
+            <Ionicons name="chevron-forward" size={24} color="#6200ee" />
+          </TouchableOpacity>
+        </View>
+
         {/* 1. TARJETA DE SALDO (HEADER) */}
         <View style={styles.cardResumen}>
           <Text style={styles.saludo}>Dinero Restante</Text>
@@ -131,4 +156,20 @@ const styles = StyleSheet.create({
   cifrasBarra: { fontSize: 13, color: '#777' },
   barraFondo: { height: 10, backgroundColor: '#f0f0f0', borderRadius: 5, overflow: 'hidden' },
   barraColor: { height: '100%', borderRadius: 5 },
+  selectorMes: { 
+    flexDirection: 'row', 
+    justifyContent: 'center', // Centra el conjunto
+    alignItems: 'center', 
+    marginBottom: 15, 
+    gap: 20 // Espacio entre flechas y texto
+  },
+  btnMes: { padding: 10, backgroundColor: '#e1d0ff', borderRadius: 10 },
+  textoMesBtn: { fontSize: 18, fontWeight: 'bold', color: '#6200ee' },
+  textoMes: { 
+    fontSize: 22, 
+    fontWeight: 'bold', 
+    color: '#333',
+    minWidth: 160, // Evita que las flechas se muevan al cambiar de mes
+    textAlign: 'center'
+  },
 });
