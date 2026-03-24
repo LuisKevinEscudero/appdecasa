@@ -1,44 +1,54 @@
-import React, { createContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useState, useEffect } from "react"; // Quitamos Alert de aquí
+import { Alert } from "react-native"; // <--- Añadimos esta línea nueva
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const BudgetContext = createContext();
 
 // Función de ayuda para obtener el mes actual en formato "YYYY-MM"
 const obtenerMesActual = () => {
   const fecha = new Date();
-  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}`;
 };
 
 export const BudgetProvider = ({ children }) => {
   // Estado principal: El mes que estamos viendo actualmente
   const [mesActivo, setMesActivo] = useState(obtenerMesActual());
-  
+
   // Estado que guarda TODO el historial. Las claves son los meses ("2026-03")
   const [historial, setHistorial] = useState({});
 
-  const usuarios = [
-    { id: '1', nombre: 'Kevin', color: '#6200ee' },
-    { id: '2', nombre: 'Oscar', color: '#03dac6' },
-    { id: '3', nombre: 'Extra', color: '#ff9800' },
+  const [usuarios, setUsuarios] = useState([
+    { id: "1", nombre: "Kevin", color: "#1d0d01" },
+    { id: "2", nombre: "Fatima", color: "#03dac6" },
+  ]);
+
+  const coloresDisponibles = [
+    "#ff9800",
+    "#e91e63",
+    "#4caf50",
+    "#2196f3",
+    "#9c27b0",
   ];
 
   // Categorías por defecto si la app está vacía
   const categoriasBase = [
-    { id: '1', nombre: 'Comida', asignado: 0 },
-    { id: '2', nombre: 'Mascota', asignado: 0 },
-    { id: '3', nombre: 'Bebé', asignado: 0 },
-    { id: '4', nombre: 'Ocio', asignado: 0 },
+    { id: "1", nombre: "Comida", asignado: 0 },
+    { id: "2", nombre: "Mascota", asignado: 0 },
+    { id: "3", nombre: "Bebé", asignado: 0 },
+    { id: "4", nombre: "Ocio", asignado: 0 },
   ];
 
   // --- 1. CARGAR DATOS AL INICIAR ---
   useEffect(() => {
     const cargarDatos = async () => {
       try {
-        const datosGuardados = await AsyncStorage.getItem('@mis_finanzas_mensuales');
+        const datosGuardados = await AsyncStorage.getItem(
+          "@mis_finanzas_mensuales",
+        );
         if (datosGuardados) {
           const historialParseado = JSON.parse(datosGuardados);
           setHistorial(historialParseado);
-          
+
           // Si el mes actual no existe en el historial, lo creamos
           if (!historialParseado[obtenerMesActual()]) {
             iniciarNuevoMes(obtenerMesActual(), historialParseado);
@@ -57,7 +67,10 @@ export const BudgetProvider = ({ children }) => {
   // --- 2. GUARDAR DATOS AL CAMBIAR EL HISTORIAL ---
   useEffect(() => {
     if (Object.keys(historial).length > 0) {
-      AsyncStorage.setItem('@mis_finanzas_mensuales', JSON.stringify(historial));
+      AsyncStorage.setItem(
+        "@mis_finanzas_mensuales",
+        JSON.stringify(historial),
+      );
     }
   }, [historial]);
 
@@ -65,13 +78,18 @@ export const BudgetProvider = ({ children }) => {
   const iniciarNuevoMes = (mes, historialActual) => {
     // Buscamos cuál fue el último mes registrado para copiar sus categorías
     const mesesGuardados = Object.keys(historialActual).sort();
-    const ultimoMes = mesesGuardados.length > 0 ? mesesGuardados[mesesGuardados.length - 1] : null;
-    
+    const ultimoMes =
+      mesesGuardados.length > 0
+        ? mesesGuardados[mesesGuardados.length - 1]
+        : null;
+
     // Copiamos las categorías del último mes, o usamos las base
     let categoriasHeredadas = categoriasBase;
     if (ultimoMes && historialActual[ultimoMes].categorias) {
       // Copiamos las categorías pero ponemos "asignado" a 0 (opcional, puedes quitarlo si prefieres mantener el presupuesto)
-      categoriasHeredadas = historialActual[ultimoMes].categorias.map(cat => ({...cat, asignado: 0}));
+      categoriasHeredadas = historialActual[ultimoMes].categorias.map(
+        (cat) => ({ ...cat, asignado: 0 }),
+      );
     }
 
     const nuevoEstado = {
@@ -79,21 +97,21 @@ export const BudgetProvider = ({ children }) => {
       [mes]: {
         ingresos: [],
         gastos: [],
-        categorias: categoriasHeredadas
-      }
+        categorias: categoriasHeredadas,
+      },
     };
     setHistorial(nuevoEstado);
   };
 
   const cambiarMesActivo = (direccion) => {
-    const [year, month] = mesActivo.split('-');
+    const [year, month] = mesActivo.split("-");
     let fecha = new Date(year, parseInt(month) - 1, 1);
-    
-    if (direccion === 'anterior') fecha.setMonth(fecha.getMonth() - 1);
-    if (direccion === 'siguiente') fecha.setMonth(fecha.getMonth() + 1);
 
-    const nuevoMesStr = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
-    
+    if (direccion === "anterior") fecha.setMonth(fecha.getMonth() - 1);
+    if (direccion === "siguiente") fecha.setMonth(fecha.getMonth() + 1);
+
+    const nuevoMesStr = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}`;
+
     // Si navegamos a un mes futuro que no existe, lo creamos
     if (!historial[nuevoMesStr]) {
       iniciarNuevoMes(nuevoMesStr, historial);
@@ -103,21 +121,59 @@ export const BudgetProvider = ({ children }) => {
 
   // --- VARIABLES DERIVADAS PARA EL MES ACTIVO ---
   // Si el historial aún no ha cargado, evitamos errores devolviendo arrays vacíos
-  const datosMesActual = historial[mesActivo] || { ingresos: [], gastos: [], categorias: [] };
-  const ingresos = datosMesActual.ingresos;
-  const gastos = datosMesActual.gastos;
-  const categorias = datosMesActual.categorias;
+  const datosMesActual = historial[mesActivo] || {
+    ingresos: [],
+    gastos: [],
+    categorias: [],
+  };
+  const ingresos = datosMesActual.ingresos || [];
+  const gastos = datosMesActual.gastos || [];
+  const categorias = datosMesActual.categorias || [];
 
   // Cálculos globales del mes activo
-  const totalIngresos = ingresos.reduce((acc, item) => acc + parseFloat(item.cantidad || 0), 0);
-  const totalAsignado = categorias.reduce((acc, cat) => acc + parseFloat(cat.asignado || 0), 0);
-  const totalGastado = gastos.reduce((acc, g) => acc + parseFloat(g.monto || 0), 0);
+  const totalIngresos = ingresos.reduce(
+    (acc, item) => acc + parseFloat(item.cantidad || 0),
+    0,
+  );
+  const totalAsignado = categorias.reduce(
+    (acc, cat) => acc + parseFloat(cat.asignado || 0),
+    0,
+  );
+  const totalGastado = gastos.reduce(
+    (acc, g) => acc + parseFloat(g.monto || 0),
+    0,
+  );
+
+  // --- CÁLCULO DE APORTACIÓN PROPORCIONAL ---
+  const desgloseUsuarios = usuarios.map((usuario) => {
+    // 1. Cuánto ha ingresado este usuario en total
+    const ingresosUsuario = ingresos
+      .filter((ing) => ing.usuarioId === usuario.id)
+      .reduce((acc, ing) => acc + parseFloat(ing.cantidad || 0), 0);
+
+    // 2. Qué porcentaje del total representa (evitando dividir por 0)
+    const porcentaje = totalIngresos > 0 ? ingresosUsuario / totalIngresos : 0;
+
+    // 3. Cuánto le toca pagar de los gastos reales
+    const debePagarGastado = totalGastado * porcentaje;
+
+    // 4. (Opcional) Cuánto le toca aportar al presupuesto asignado de las categorías
+    const debePagarAsignado = totalAsignado * porcentaje;
+
+    return {
+      ...usuario, // Mantiene su id, nombre y color
+      ingresosTotales: ingresosUsuario,
+      porcentaje: porcentaje * 100, // Lo pasamos a formato 0-100%
+      debePagarGastado,
+      debePagarAsignado,
+    };
+  });
 
   // --- FUNCIONES DE ACTUALIZACIÓN (Actualizan solo el mes activo) ---
   const actualizarMesActivo = (nuevosDatos) => {
-    setHistorial(prev => ({
+    setHistorial((prev) => ({
       ...prev,
-      [mesActivo]: { ...prev[mesActivo], ...nuevosDatos }
+      [mesActivo]: { ...prev[mesActivo], ...nuevosDatos },
     }));
   };
 
@@ -125,52 +181,129 @@ export const BudgetProvider = ({ children }) => {
   const agregarIngreso = (concepto, cantidad, usuarioId) => {
     const nuevoIngreso = {
       id: Date.now().toString(),
-      concepto: concepto,    // <--- Cambiado de 'nombre' a 'concepto'
+      concepto: concepto, // <--- Cambiado de 'nombre' a 'concepto'
       cantidad: parseFloat(cantidad) || 0,
-      usuarioId: usuarioId,  // <--- ¡Esto es lo que faltaba guardar!
-      fecha: new Date().toLocaleDateString()
+      usuarioId: usuarioId, // <--- ¡Esto es lo que faltaba guardar!
+      fecha: new Date().toLocaleDateString(),
     };
-    
-    actualizarMesActivo({ 
-      ingresos: [...ingresos, nuevoIngreso] 
+
+    actualizarMesActivo({
+      ingresos: [...ingresos, nuevoIngreso],
     });
   };
-  
+
   const registrarMovimientoGasto = (nuevoGasto) => {
-    const gastoCompleto = { ...nuevoGasto, id: Date.now().toString(), fecha: new Date().toLocaleDateString() };
+    const gastoCompleto = {
+      ...nuevoGasto,
+      id: Date.now().toString(),
+      fecha: new Date().toLocaleDateString(),
+    };
     actualizarMesActivo({ gastos: [...gastos, gastoCompleto] });
   };
 
   const agregarCategoria = (nombre) => {
-    actualizarMesActivo({ categorias: [...categorias, { id: Date.now().toString(), nombre, asignado: 0 }] });
+    actualizarMesActivo({
+      categorias: [
+        ...categorias,
+        { id: Date.now().toString(), nombre, asignado: 0 },
+      ],
+    });
   };
 
   const eliminarCategoria = (id) => {
     actualizarMesActivo({
-      categorias: categorias.filter(cat => cat.id !== id),
-      gastos: gastos.filter(g => g.categoriaId !== id)
+      categorias: categorias.filter((cat) => cat.id !== id),
+      gastos: gastos.filter((g) => g.categoriaId !== id),
     });
   };
 
   const actualizarAsignacion = (id, valor) => {
     actualizarMesActivo({
-      categorias: categorias.map(cat => cat.id === id ? { ...cat, asignado: valor } : cat)
+      categorias: categorias.map((cat) =>
+        cat.id === id ? { ...cat, asignado: valor } : cat,
+      ),
     });
   };
 
   const eliminarGasto = (gastoId) => {
     actualizarMesActivo({
-      gastos: gastos.filter(g => g.id !== gastoId)
+      gastos: gastos.filter((g) => g.id !== gastoId),
     });
   };
 
+  const agregarUsuario = (nombre) => {
+    const nuevo = {
+      id: Date.now().toString(),
+      nombre: nombre,
+      color: coloresDisponibles[usuarios.length % coloresDisponibles.length],
+    };
+    setUsuarios([...usuarios, nuevo]);
+  };
+
+  const eliminarUsuario = (id) => {
+    if (usuarios.length > 1) {
+      setUsuarios(usuarios.filter((u) => u.id !== id));
+    } else {
+      Alert.alert("Error", "Debe quedar al menos un usuario");
+    }
+  };
+
+  const reiniciarApp = async () => {
+    Alert.alert(
+      "Reiniciar App",
+      "¿Estás seguro? Se borrarán todos los ingresos, gastos, categorías y usuarios de forma permanente.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Borrar Todo",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // 1. Borramos todo de la memoria del teléfono
+              await AsyncStorage.clear();
+
+              // 2. Reseteamos los estados a sus valores iniciales
+              setHistorial({});
+              setUsuarios([
+                { id: "1", nombre: "Kevin", color: "#1d0d01" },
+                { id: "2", nombre: "Fatima", color: "#03dac6" },
+              ]);
+              setMesActivo(obtenerMesActual());
+
+              Alert.alert("Éxito", "La aplicación ha sido reiniciada.");
+            } catch (e) {
+              console.error("Error al reiniciar", e);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
-    <BudgetContext.Provider value={{
-      mesActivo, cambiarMesActivo,
-      ingresos, totalIngresos, totalAsignado, totalGastado, categorias, gastos,
-      agregarIngreso, actualizarAsignacion, registrarMovimientoGasto,
-      agregarCategoria, eliminarCategoria, eliminarGasto, usuarios
-    }}>
+    <BudgetContext.Provider
+      value={{
+        mesActivo,
+        cambiarMesActivo,
+        ingresos,
+        totalIngresos,
+        totalAsignado,
+        totalGastado,
+        categorias,
+        gastos,
+        agregarIngreso,
+        actualizarAsignacion,
+        registrarMovimientoGasto,
+        agregarCategoria,
+        eliminarCategoria,
+        eliminarGasto,
+        usuarios,
+        agregarUsuario,
+        eliminarUsuario,
+        desgloseUsuarios,
+        reiniciarApp
+      }}
+    >
       {children}
     </BudgetContext.Provider>
   );
