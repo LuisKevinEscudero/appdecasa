@@ -32,10 +32,10 @@ export const BudgetProvider = ({ children }) => {
 
   // Categorías por defecto si la app está vacía
   const categoriasBase = [
-    { id: "1", nombre: "Comida", asignado: 0 },
-    { id: "2", nombre: "Mascota", asignado: 0 },
-    { id: "3", nombre: "Bebé", asignado: 0 },
-    { id: "4", nombre: "Ocio", asignado: 0 },
+    { id: "1", nombre: "Comida", asignado: 0, tipoPago: "tarjeta" },
+    { id: "2", nombre: "Mascota", asignado: 0, tipoPago: "tarjeta" },
+    { id: "3", nombre: "Bebé", asignado: 0, tipoPago: "tarjeta" },
+    { id: "4", nombre: "Ocio", asignado: 0, tipoPago: "tarjeta" },
   ];
 
   // --- 1. CARGAR DATOS AL INICIAR ---
@@ -88,7 +88,7 @@ export const BudgetProvider = ({ children }) => {
     if (ultimoMes && historialActual[ultimoMes].categorias) {
       // Copiamos las categorías pero ponemos "asignado" a 0 (opcional, puedes quitarlo si prefieres mantener el presupuesto)
       categoriasHeredadas = historialActual[ultimoMes].categorias.map(
-        (cat) => ({ ...cat, asignado: 0 }),
+        (cat) => ({ ...cat, asignado: 0, tipoPago: cat.tipoPago || "tarjeta" }),
       );
     }
 
@@ -143,6 +143,22 @@ export const BudgetProvider = ({ children }) => {
     (acc, g) => acc + parseFloat(g.monto || 0),
     0,
   );
+
+  const totalAsignadoTarjeta = categorias
+    .filter((cat) => cat.tipoPago === "tarjeta" || !cat.tipoPago)
+    .reduce((acc, cat) => acc + parseFloat(cat.asignado || 0), 0);
+
+  const totalAsignadoEfectivo = categorias
+    .filter((cat) => cat.tipoPago === "efectivo")
+    .reduce((acc, cat) => acc + parseFloat(cat.asignado || 0), 0);
+
+  const cambiarTipoPagoCategoria = (id, nuevoTipo) => {
+    actualizarMesActivo({
+      categorias: categorias.map((cat) =>
+        cat.id === id ? { ...cat, tipoPago: nuevoTipo } : cat,
+      ),
+    });
+  };
 
   // --- CÁLCULO DE APORTACIÓN PROPORCIONAL ---
   const desgloseUsuarios = usuarios.map((usuario) => {
@@ -301,7 +317,10 @@ export const BudgetProvider = ({ children }) => {
         agregarUsuario,
         eliminarUsuario,
         desgloseUsuarios,
-        reiniciarApp
+        reiniciarApp,
+        totalAsignadoTarjeta,
+        totalAsignadoEfectivo,
+        cambiarTipoPagoCategoria,
       }}
     >
       {children}
