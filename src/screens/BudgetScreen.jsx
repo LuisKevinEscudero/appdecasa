@@ -31,6 +31,7 @@ export default function BudgetScreen() {
     totalAsignadoTarjeta,
     totalAsignadoEfectivo,
     cambiarTipoPagoCategoria,
+    desgloseUsuarios
   } = useContext(BudgetContext);
 
   const [nuevaCatNombre, setNuevaCatNombre] = useState("");
@@ -67,7 +68,9 @@ export default function BudgetScreen() {
       <View style={styles.container}>
         
         {/* HEADER DE AHORRO OPTIMIZADO */}
-        <HeaderAhorro totalIngresos={totalIngresos} totalAsignado={totalAsignado} totalAsignadoTarjeta={totalAsignadoTarjeta} totalAsignadoEfectivo={totalAsignadoEfectivo}/>
+        <HeaderAhorro totalIngresos={totalIngresos} totalAsignado={totalAsignado} 
+        totalAsignadoTarjeta={totalAsignadoTarjeta} totalAsignadoEfectivo={totalAsignadoEfectivo}
+        desgloseUsuarios={desgloseUsuarios}/>
 
         <View style={styles.formAñadir}>
           <TextInput

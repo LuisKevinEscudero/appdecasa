@@ -160,28 +160,37 @@ export const BudgetProvider = ({ children }) => {
     });
   };
 
-  // --- CÁLCULO DE APORTACIÓN PROPORCIONAL ---
+  // --- CÁLCULO DE APORTACIÓN PROPORCIONAL Y AHORRO INDIVIDUAL ---
   const desgloseUsuarios = usuarios.map((usuario) => {
-    // 1. Cuánto ha ingresado este usuario en total
+    // 1. Cuánto ha ingresado este usuario
     const ingresosUsuario = ingresos
       .filter((ing) => ing.usuarioId === usuario.id)
       .reduce((acc, ing) => acc + parseFloat(ing.cantidad || 0), 0);
 
-    // 2. Qué porcentaje del total representa (evitando dividir por 0)
+    // 2. Porcentaje de aportación sobre el total
     const porcentaje = totalIngresos > 0 ? ingresosUsuario / totalIngresos : 0;
 
-    // 3. Cuánto le toca pagar de los gastos reales
-    const debePagarGastado = totalGastado * porcentaje;
-
-    // 4. (Opcional) Cuánto le toca aportar al presupuesto asignado de las categorías
+    // 3. Cuánto le toca pagar del presupuesto total asignado
     const debePagarAsignado = totalAsignado * porcentaje;
 
+    // --- LÓGICA DE AHORRO INDIVIDUAL ---
+    // Calculamos qué le sobra a este usuario tras su parte de los gastos
+    const excedenteIndividual = ingresosUsuario - debePagarAsignado;
+
+    // Si el excedente es positivo, ahorra el 30% de SU sobrante
+    const ahorroIndividual =
+      excedenteIndividual > 0 ? excedenteIndividual * 0.3 : 0;
+
+    // Lo que le queda realmente libre tras pagar y ahorrar
+    const disponibleTrasAhorro = excedenteIndividual - ahorroIndividual;
+
     return {
-      ...usuario, // Mantiene su id, nombre y color
+      ...usuario,
       ingresosTotales: ingresosUsuario,
-      porcentaje: porcentaje * 100, // Lo pasamos a formato 0-100%
-      debePagarGastado,
+      porcentaje: porcentaje * 100,
       debePagarAsignado,
+      ahorroIndividual, // <--- Nuevo dato
+      disponibleTrasAhorro, // <--- Nuevo dato
     };
   });
 
@@ -221,7 +230,7 @@ export const BudgetProvider = ({ children }) => {
     actualizarMesActivo({
       categorias: [
         ...categorias,
-        { id: Date.now().toString(), nombre, asignado: 0 },
+        { id: Date.now().toString(), nombre, asignado: 0, tipoPago: "tarjeta" },
       ],
     });
   };
